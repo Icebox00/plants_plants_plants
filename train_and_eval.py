@@ -38,22 +38,22 @@ def load_datasets(binary):
         with open('../test_labels.pkl', 'rb') as f:
             test_labels = pickle.load(f)
 
-    return train_images, train_labels, val_images, val_labels, test_images, test_images
+    return train_images, train_labels, val_images, val_labels, test_images, test_labels
 
 
 def train_and_evaluate():
     binary = True # True for health/unhealthy, False for all 33 classes
     model_path = 'best_model.keras'
     input_shape = (256, 256, 3)
-    num_classes = 38
+    num_classes = 2 #FOR BINARY... 38? for regular
     batch_size = 32
-    epochs = 30
+    epochs = 10
 
     # Load datasets
-    train_data, val_data, test_data = load_datasets(binary=binary)
+    train_data, train_labels, val_data, val_labels, test_data, test_labels = load_datasets(binary=binary)
 
     # Build model
-    model = build_hybrid_model(input_shape=input_shape, num_classes=num_classes)
+    model = build_hybrid_model(input_shape=input_shape, binary=True)
 
     # Compile model
     model.compile(optimizer='adam',
@@ -67,10 +67,11 @@ def train_and_evaluate():
     # Train model
     history = model.fit(
         train_data,
-        validation_data=val_data,
+        train_labels,
+        validation_data=(val_data, val_labels),
         epochs=epochs,
         callbacks=[checkpoint, early_stop]
-    )
+        )
 
     # Plot training history
     plt.figure(figsize=(10, 4))
@@ -93,7 +94,7 @@ def train_and_evaluate():
     # Load best model and evaluate on test set
     print("\nEvaluating best model on test set...")
     best_model = tf.keras.models.load_model(model_path)
-    test_loss, test_acc = best_model.evaluate(test_data)
+    test_loss, test_acc = best_model.evaluate(test_data, test_labels)
     print(f"✅ Test Accuracy: {test_acc:.4f}")
     print(f"📉 Test Loss: {test_loss:.4f}")
 

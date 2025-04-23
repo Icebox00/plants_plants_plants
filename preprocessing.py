@@ -197,7 +197,7 @@ class PreprocessAsNumpyArrays:
         # Testing data and labels
         with open("../test_images.pkl", 'wb') as f:
             pickle.dump(test_images, f)
-        with open("../test_labels", 'wb') as f:
+        with open("../test_labels.pkl", 'wb') as f:
             pickle.dump(test_labels, f)
         with open("../binary_test_labels.pkl", 'wb') as f:
             pickle.dump(binary_test_labels, f)
@@ -247,7 +247,6 @@ If you want to download the data from Kaggle through python, there are two optio
 '''
 
 #install_data()
-
 #############################
 '''
 Make sure data is downloaded and that the paths to the data directories are correct before running the rest of the code.

@@ -42,18 +42,21 @@ def load_datasets(binary):
 
 
 def train_and_evaluate():
-    binary = True # True for health/unhealthy, False for all 33 classes
-    model_path = 'best_model.keras'
+    binary = False # True for health/unhealthy, False for all 33 classes
+    if binary:
+        model_path = 'best_model_binary.keras'
+        epochs = 10
+    else:
+        model_path = 'best_model_all_classes.keras'
+        epochs = 50
     input_shape = (256, 256, 3)
-    num_classes = 2 #FOR BINARY... 38? for regular
     batch_size = 32
-    epochs = 10
 
     # Load datasets
     train_data, train_labels, val_data, val_labels, test_data, test_labels = load_datasets(binary=binary)
 
     # Build model
-    model = build_hybrid_model(input_shape=input_shape, binary=True)
+    model = build_hybrid_model(input_shape=input_shape, binary=binary)
 
     # Compile model
     model.compile(optimizer='adam',
@@ -62,7 +65,7 @@ def train_and_evaluate():
 
     # Callbacks
     checkpoint = ModelCheckpoint(model_path, save_best_only=True, monitor='val_accuracy', verbose=1)
-    early_stop = EarlyStopping(patience=5, restore_best_weights=True, monitor='val_accuracy', verbose=1)
+    early_stop = EarlyStopping(patience=7, restore_best_weights=True, monitor='val_accuracy', verbose=1)
 
     # Train model
     history = model.fit(
@@ -88,7 +91,7 @@ def train_and_evaluate():
     plt.legend()
 
     plt.tight_layout()
-    plt.savefig("training_plot.png")
+    plt.savefig(f"training_plot_binary_{binary}.png")
     plt.show()
 
     # Load best model and evaluate on test set

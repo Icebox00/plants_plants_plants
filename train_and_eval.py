@@ -26,10 +26,16 @@ def load_datasets(binary):
     if binary:
         with open('../binary_train_labels.pkl', 'rb') as f:
             train_labels = pickle.load(f)
+        train_labels = tf.cast(train_labels, dtype=tf.float32)
+
         with open('../binary_val_labels.pkl', 'rb') as f:
             val_labels = pickle.load(f)
+        val_labels = tf.cast(val_labels, dtype=tf.float32)
+            
         with open('../binary_test_labels.pkl', 'rb') as f:
             test_labels = pickle.load(f)
+        test_labels = tf.cast(test_labels, dtype=tf.float32)
+
     else: 
         with open('../train_labels.pkl', 'rb') as f:
             train_labels = pickle.load(f)
@@ -42,10 +48,11 @@ def load_datasets(binary):
 
 
 def train_and_evaluate():
-    binary = False # True for health/unhealthy, False for all 33 classes
+    binary = True # True for health/unhealthy, False for all 33 classes
+
     if binary:
         model_path = 'best_model_binary.keras'
-        epochs = 10
+        epochs = 15
     else:
         model_path = 'best_model_all_classes.keras'
         epochs = 50
@@ -54,14 +61,17 @@ def train_and_evaluate():
 
     # Load datasets
     train_data, train_labels, val_data, val_labels, test_data, test_labels = load_datasets(binary=binary)
-
+    
     # Build model
     model = build_hybrid_model(input_shape=input_shape, binary=binary)
 
     # Compile model
     model.compile(optimizer='adam',
                   loss='categorical_crossentropy',
-                  metrics=['accuracy'])
+                  metrics=[
+                    'accuracy',
+                    tf.keras.metrics.F1Score(average='weighted')
+                  ])
 
     # Callbacks
     checkpoint = ModelCheckpoint(model_path, save_best_only=True, monitor='val_accuracy', verbose=1)
@@ -82,12 +92,16 @@ def train_and_evaluate():
     plt.plot(history.history['accuracy'], label='Train Acc')
     plt.plot(history.history['val_accuracy'], label='Val Acc')
     plt.title('Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
     plt.legend()
 
     plt.subplot(1, 2, 2)
     plt.plot(history.history['loss'], label='Train Loss')
     plt.plot(history.history['val_loss'], label='Val Loss')
     plt.title('Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
     plt.legend()
 
     plt.tight_layout()
@@ -97,9 +111,11 @@ def train_and_evaluate():
     # Load best model and evaluate on test set
     print("\nEvaluating best model on test set...")
     best_model = tf.keras.models.load_model(model_path)
-    test_loss, test_acc = best_model.evaluate(test_data, test_labels)
+    test_loss, test_acc, test_f1 = best_model.evaluate(test_data, test_labels)
     print(f"✅ Test Accuracy: {test_acc:.4f}")
     print(f"📉 Test Loss: {test_loss:.4f}")
+    print(f"Test Weighted F1 Score: {test_f1:.4f}")
+    print(model.summary())
 
 if __name__ == '__main__':
     train_and_evaluate()   
